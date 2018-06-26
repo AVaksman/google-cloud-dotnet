@@ -24,8 +24,6 @@ namespace Google.Cloud.Bigtable.V2.ScanTest.Runner
 
         static TableName _table;
         static string _stringFormat;
-        static BigtableClient.ClientCreationSettings _scanClientCreationSettings = new BigtableClient.ClientCreationSettings(1);
-        static readonly BigtableClient _bigtableClient = BigtableClient.Create(_scanClientCreationSettings);
 
         public ScanRunnerService(ILogger<App> logger, IOptions<AppSettings> config)
         {
@@ -71,6 +69,9 @@ namespace Google.Cloud.Bigtable.V2.ScanTest.Runner
 
         public async Task<int> Scan(LongConcurrentHistogram histogramScan)
         {
+            BigtableClient.ClientCreationSettings _scanClientCreationSettings = new BigtableClient.ClientCreationSettings(_config.ChannelCount);
+            BigtableClient _bigtableClient = BigtableClient.Create(_scanClientCreationSettings);
+
             _stringFormat = "D" + _config.RowKeySize;
             _table = new TableName(_config.ProjectId, _config.InstanceId, _config.TableName);
             //Perform scan test
@@ -78,7 +79,7 @@ namespace Google.Cloud.Bigtable.V2.ScanTest.Runner
 
             ReadErrors = 0;
 
-            _logger.LogInformation($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Starting Scan test against table {_config.TableName} for {_config.ScanTestDurationMinutes} minutes at {_config.RowsLimit} rows chunks");
+            _logger.LogInformation($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Starting Scan test against table {_config.TableName} for {_config.ScanTestDurationMinutes} minutes at {_config.RowsLimit} rows chunks, using {_config.ChannelCount} channel(s).");
 
             var rowsRead = 0;
             var r = new Random();

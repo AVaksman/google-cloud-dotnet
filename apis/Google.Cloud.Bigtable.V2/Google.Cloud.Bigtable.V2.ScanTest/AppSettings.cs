@@ -11,6 +11,7 @@
         public long RowsLimit { get; set; }
         public int RowKeySize { get; set; }
         public int ScanTestDurationMinutes { get; set; }
+        public int ChannelCount { get; set; }
         public string TableName { get; set; }
         public string Title { get; set; }
     }

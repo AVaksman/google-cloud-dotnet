@@ -39,6 +39,7 @@ namespace Google.Cloud.Bigtable.V2.ScanTest
                 { "m|minutes=", "Scan test duration minutes", v => _config.ScanTestDurationMinutes = Convert.ToInt32(v)},
                 { "b|batch=", "ReadRows batch size rows", v => _config.RowsLimit = Convert.ToInt64(v)},
                 { "t|table=", "Table name", v => _config.TableName = v},
+                { "n|number=", "number of gRPC channels", v => _config.ChannelCount = Convert.ToInt32(v) },
                 { "H|Help", "Show this message and exit", v => showHelp = v != null },
             };
 

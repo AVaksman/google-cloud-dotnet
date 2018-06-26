@@ -40,4 +40,11 @@
   <ItemGroup>
     <ProjectReference Include="..\Google.Cloud.Bigtable.V2\Google.Cloud.Bigtable.V2.csproj" />
   </ItemGroup>
+
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
