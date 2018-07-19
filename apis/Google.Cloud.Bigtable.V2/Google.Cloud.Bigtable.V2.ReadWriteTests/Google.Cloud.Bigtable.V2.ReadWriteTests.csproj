@@ -20,4 +20,13 @@
     <ProjectReference Include="..\Google.Cloud.Bigtable.V2\Google.Cloud.Bigtable.V2.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Grass-Clump-479-cadc7f3cb8da.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

@@ -31,6 +31,7 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
                 "Options:",
                 {"i|instance=", "Bigtable InstanceID name", v => settings.InstanceId = v},
                 {"o|timeout=", "MutateRow call timeout setting, default 20000 milliseconds", v => settings.Timeout = Convert.ToInt32(v)},
+                {"a|AppProfileId=", "AppProfileId to be used", v => settings.AppProfileId = v },
                 {"T|TableName=", "TableName to use", v => settings.TableName = v },
                 {"t|test=", "Single RPC Test type:\n" +
                                "1 for ReadOnly test on main thread againgst Bigtable server\n" +

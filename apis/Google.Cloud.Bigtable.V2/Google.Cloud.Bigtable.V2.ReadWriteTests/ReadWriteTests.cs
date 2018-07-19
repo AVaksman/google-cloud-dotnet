@@ -60,6 +60,7 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
                 }
                 case int n when n > 14:
                 {
+                    CreateAppProfile();
                     int channelsNeeded;
                     if (n > 17)
                     {
@@ -72,12 +73,48 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
                     {
                         channelsNeeded = (Math.Max(settings.RpcThreads, settings.LoadThreads) + 3) / 4;
                     }
-                    var channelPoolCreationSettings = new BigtableClient.ClientCreationSettings(channelsNeeded, null,GetCredentials(), null);
-                    _bigtableClient = BigtableClient.Create(channelPoolCreationSettings);
+                    var channelPoolCreationSettings = new BigtableClient.ClientCreationSettings(channelsNeeded);
+                    _bigtableClient = BigtableClient.Create(channelPoolCreationSettings, settings.AppProfileId);
                     break;
                 }
             }
             SetTableName();
+        }
+
+        internal void CreateAppProfile()
+        {
+            BigtableInstanceAdminClient bigtableInstanceAdminClient = BigtableInstanceAdminClient.Create();
+
+            GetAppProfileRequest getAppProfileRequest = new GetAppProfileRequest
+            {
+                AppProfileName = new AppProfileName(_settings.ProjectId, _settings.InstanceId, _settings.AppProfileId)
+            };
+            try
+            {
+                bigtableInstanceAdminClient.GetAppProfile(getAppProfileRequest);
+            }
+            catch (RpcException ex)
+            {
+                if (ex.StatusCode == StatusCode.NotFound)
+                {
+                    AppProfile cSharpAppProfile = new AppProfile
+                    {
+                        Description = "C# performance testing",
+                        MultiClusterRoutingUseAny = new AppProfile.Types.MultiClusterRoutingUseAny()
+                    };
+                    CreateAppProfileRequest createAppProfileRequest = new CreateAppProfileRequest
+                    {
+                        ParentAsInstanceName = new InstanceName(_settings.ProjectId, _settings.InstanceId),
+                        AppProfileId = _settings.AppProfileId,
+                        AppProfile = cSharpAppProfile,
+                    };
+                    bigtableInstanceAdminClient.CreateAppProfile(createAppProfileRequest);
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
 
         internal void WriteOnlyTest()
@@ -919,13 +956,6 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
             }
             threads.ForEach(a => a.Start());
             threads.ForEach(a => a.Join());
-        }
-
-        private ChannelCredentials GetCredentials()
-        {
-            var path = Directory.GetCurrentDirectory();
-            ChannelCredentials channelCredentials = GoogleCredential.FromComputeCredential().ToChannelCredentials();
-            return channelCredentials;
         }
 
         private int GetRandom(int upperLimit)
