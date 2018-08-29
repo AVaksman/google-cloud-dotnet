@@ -494,8 +494,7 @@ namespace Google.Cloud.Bigtable.V2.GenerateClient
                 }
 
                 node = node.WithBodySafe(Block(
-                    If(IdentifierName(AppProfileIdFieldName).NotEqualTo(Null())
-                            .And(appProfileIdProperty.Member("Length").EqualTo(Zero())),
+                    If(AppProfileIdFieldName.NotEqualTo(Null()).And(appProfileIdProperty.IsEmpty()),
                         appProfileIdProperty.AssignFrom(AppProfileIdFieldName).ToStatement()),
                     ReturnStatement(resultExpression)));
 
