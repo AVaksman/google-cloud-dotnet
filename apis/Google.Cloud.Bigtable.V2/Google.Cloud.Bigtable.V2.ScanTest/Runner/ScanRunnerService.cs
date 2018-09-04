@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
+using Google.Cloud.Bigtable.Admin.V2;
 using Google.Cloud.Bigtable.Common.V2;
 using Google.Cloud.Bigtable.V2;
 using Grpc.Core;
@@ -70,7 +71,8 @@ namespace Google.Cloud.Bigtable.V2.ScanTest.Runner
         public async Task<int> Scan(LongConcurrentHistogram histogramScan)
         {
             BigtableClient.ClientCreationSettings _scanClientCreationSettings = new BigtableClient.ClientCreationSettings(_config.ChannelCount);
-            BigtableClient _bigtableClient = BigtableClient.Create(_scanClientCreationSettings);
+            CreateAppProfile();
+            BigtableClient _bigtableClient = BigtableClient.Create(_scanClientCreationSettings, _config.AppProfileId);
 
             _stringFormat = "D" + _config.RowKeySize;
             _table = new TableName(_config.ProjectId, _config.InstanceId, _config.TableName);
@@ -80,6 +82,7 @@ namespace Google.Cloud.Bigtable.V2.ScanTest.Runner
             ReadErrors = 0;
 
             _logger.LogInformation($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Starting Scan test against table {_config.TableName} for {_config.ScanTestDurationMinutes} minutes at {_config.RowsLimit} rows chunks, using {_config.ChannelCount} channel(s).");
+            _logger.LogInformation($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} AppProfile ID {_config.AppProfileId}");
 
             var rowsRead = 0;
             var r = new Random();
@@ -141,6 +144,42 @@ namespace Google.Cloud.Bigtable.V2.ScanTest.Runner
 #endif
             }).ConfigureAwait(false);
             return rowCount;
+        }
+
+        internal void CreateAppProfile()
+        {
+            BigtableInstanceAdminClient bigtableInstanceAdminClient = BigtableInstanceAdminClient.Create();
+
+            GetAppProfileRequest getAppProfileRequest = new GetAppProfileRequest
+            {
+                AppProfileName = new AppProfileName(_config.ProjectId, _config.InstanceId, _config.AppProfileId)
+            };
+            try
+            {
+                bigtableInstanceAdminClient.GetAppProfile(getAppProfileRequest);
+            }
+            catch (RpcException ex)
+            {
+                if (ex.StatusCode == StatusCode.NotFound)
+                {
+                    AppProfile cSharpAppProfile = new AppProfile
+                    {
+                        Description = "C# performance testing",
+                        MultiClusterRoutingUseAny = new AppProfile.Types.MultiClusterRoutingUseAny()
+                    };
+                    CreateAppProfileRequest createAppProfileRequest = new CreateAppProfileRequest
+                    {
+                        ParentAsInstanceName = new InstanceName(_config.ProjectId, _config.InstanceId),
+                        AppProfileId = _config.AppProfileId,
+                        AppProfile = cSharpAppProfile,
+                    };
+                    bigtableInstanceAdminClient.CreateAppProfile(createAppProfileRequest);
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
     }
 }

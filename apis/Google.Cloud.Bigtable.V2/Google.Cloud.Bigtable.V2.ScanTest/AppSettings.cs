@@ -5,6 +5,7 @@
         public string InstanceId { get; set; }
         public string ProjectId { get; set; }
         public string RowKeyPrefix { get; set; }
+        public string AppProfileId { get; set; }
         public string LogFile { get; set; }
         public string ScanFile { get; set; }
         public long Records { get; set; }

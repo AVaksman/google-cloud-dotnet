@@ -36,6 +36,7 @@ namespace Google.Cloud.Bigtable.V2.ScanTest
                 "Options:",
                 { "i|instance=", "Bigtable InstanceID name", v => _config.InstanceId = v },
                 { "r|rows=", "RowKey spectrum/total rows loaded", v => _config.Records = Convert.ToInt64(v)},
+                { "a|AppProfileId=", "AppProfileId to be used", v => _config.AppProfileId = v },
                 { "m|minutes=", "Scan test duration minutes", v => _config.ScanTestDurationMinutes = Convert.ToInt32(v)},
                 { "b|batch=", "ReadRows batch size rows", v => _config.RowsLimit = Convert.ToInt64(v)},
                 { "t|table=", "Table name", v => _config.TableName = v},
