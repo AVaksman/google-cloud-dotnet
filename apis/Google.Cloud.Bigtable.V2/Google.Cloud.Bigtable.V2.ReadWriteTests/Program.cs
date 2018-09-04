@@ -13,7 +13,7 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
             #region Load configurations
 
             var builder = new ConfigurationBuilder().
-                SetBasePath(Directory.GetCurrentDirectory())
+                SetBasePath(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.Parent.FullName)
                 .AddJsonFile("appsettings.json", false, true);
 
             IConfigurationRoot configuration = builder.Build();

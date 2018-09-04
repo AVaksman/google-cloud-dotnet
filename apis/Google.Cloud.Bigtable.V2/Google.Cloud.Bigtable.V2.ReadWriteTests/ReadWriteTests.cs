@@ -124,6 +124,7 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
 
             Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Instance: {_settings.InstanceId}");
             Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Starting {Type} test against Table: {_settings.TableName} for {_settings.RpcTestDurationMinutes} minutes using single thread");
+            Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} AppProfile ID: {_settings.AppProfileId}");
 
             var runtime = Stopwatch.StartNew();
 
@@ -198,6 +199,7 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
 
             Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Instance: {_settings.InstanceId}");
             Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Starting {Type} test against Table: {_settings.TableName} for {_settings.RpcTestDurationMinutes} minutes using {_settings.RpcThreads} threads");
+            Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} AppProfile ID: {_settings.AppProfileId}");
 
             List<Thread> threads = new List<Thread>();
 
@@ -254,6 +256,7 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
 
             Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Instance: {_settings.InstanceId}");
             Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Starting {Type} test against Table: {_settings.TableName} for {_settings.RpcTestDurationMinutes} minutes using {_settings.RpcThreads} threads");
+            Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} AppProfile ID: {_settings.AppProfileId}");
 
             List<Thread> threads = new List<Thread>();
 
@@ -446,6 +449,7 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
 
             Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Instance: {_settings.InstanceId}");
             Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Starting {Type} test against Table: {_settings.TableName} for {_settings.RpcTestDurationMinutes} minutes using {_settings.RpcThreads} thread");
+            Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} AppProfile ID: {_settings.AppProfileId}");
 
             List<Thread> threads = new List<Thread>();
 
@@ -559,6 +563,7 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
 
             Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Instance: {_settings.InstanceId}");
             Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Starting {Type} test against Table: {_settings.TableName} for {_settings.Records} records using {_settings.LoadThreads} threads");
+            Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} AppProfile ID: {_settings.AppProfileId}");
 
             var startIdCount = _settings.Records / _settings.Batchsize;
             var startIdsList = new List<int>();
@@ -884,6 +889,7 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
 
             Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Instance: {_settings.InstanceId}");
             Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Starting {Type} test against Table: {_settings.TableName} for {_settings.RpcTestDurationMinutes} minutes using {_settings.RpcThreads} thread");
+            Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} AppProfile ID: {_settings.AppProfileId}");
 
             List<Thread> threads = new List<Thread>();
 
