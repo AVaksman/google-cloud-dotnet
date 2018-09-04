@@ -143,7 +143,7 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
                         stopWatch.Stop();
 
                         runner.WriteCsvToConsoleReadWrite(settings.RpcTestDurationMinutes * 60d);
-                        runner.WriteCsvReadWrite(settings.RpcTestDurationMinutes * 60d);
+                        //runner.WriteCsvReadWrite(settings.RpcTestDurationMinutes * 60d);
                         break;
                     }
                 case 11:
@@ -184,7 +184,7 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
                         stopWatch.Stop();
 
                         runner.WriteCsvToConsoleReadWrite(settings.RpcTestDurationMinutes * 60d);
-                        runner.WriteCsvReadWrite(settings.RpcTestDurationMinutes * 60d);
+                        //runner.WriteCsvReadWrite(settings.RpcTestDurationMinutes * 60d);
                         break;
                     }
                 case 16:
@@ -239,7 +239,7 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
 
                         runner.ReadWriteMutlipleChannels();
                         runner.WriteCsvToConsoleReadWrite(settings.RpcTestDurationMinutes * 60d);
-                        runner.WriteCsvReadWrite(settings.RpcTestDurationMinutes * 60d);
+                        //runner.WriteCsvReadWrite(settings.RpcTestDurationMinutes * 60d);
 
                         runner.DeleteTable();
                         break;

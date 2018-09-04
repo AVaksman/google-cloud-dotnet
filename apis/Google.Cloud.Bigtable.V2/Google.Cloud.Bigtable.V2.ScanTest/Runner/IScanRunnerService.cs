@@ -12,7 +12,7 @@ namespace Google.Cloud.Bigtable.V2.ScanTest.Runner
         ReadRowsRequest ReadRowsRequestBuilder(BigtableByteString rowKey);
         void WriteCsvToConsole(TimeSpan scanDuration, int rowsRead,  LongConcurrentHistogram hScan);
 
-        void WriteCsv(TimeSpan scanDuration, int rowsRead,  LongConcurrentHistogram hScan);
+        // void WriteCsv(TimeSpan scanDuration, int rowsRead,  LongConcurrentHistogram hScan);
 
         Task<int> Scan(LongConcurrentHistogram histogramScan);
     }

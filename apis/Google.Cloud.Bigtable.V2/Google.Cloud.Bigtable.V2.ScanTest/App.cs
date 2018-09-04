@@ -73,7 +73,7 @@ namespace Google.Cloud.Bigtable.V2.ScanTest
                 _logger.LogInformation($"rowCount {rowCount:N0}, duration: {stopwatch.Elapsed.TotalSeconds:N}");
 
                 _scanRunnerService.WriteCsvToConsole(stopwatch.Elapsed, rowCount, _histogramScan);
-                _scanRunnerService.WriteCsv(stopwatch.Elapsed, rowCount, _histogramScan);
+                // _scanRunnerService.WriteCsv(stopwatch.Elapsed, rowCount, _histogramScan);
             }
 
             catch (Exception ex)
