@@ -65,7 +65,7 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
                     if (n > 17)
                     {
                         channelsNeeded = n == 18
-                            ? settings.LoadThreads + 3 / 4
+                            ? (settings.LoadThreads + 3) / 4
                             : (Math.Max(settings.RpcThreads, settings.LoadThreads) + 3) / 4;
                         _bigtableTableAdminClient = BigtableTableAdminClient.Create();
                     }
@@ -73,7 +73,7 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
                     {
                         channelsNeeded = (Math.Max(settings.RpcThreads, settings.LoadThreads) + 3) / 4;
                     }
-                    var channelPoolCreationSettings = new BigtableClient.ClientCreationSettings(channelsNeeded);
+                    var channelPoolCreationSettings = new BigtableClient.ClientCreationSettings(channelsNeeded, credentials: GetCredentials());
                     _bigtableClient = BigtableClient.Create(channelPoolCreationSettings, settings.AppProfileId);
                     break;
                 }
@@ -963,6 +963,14 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
             threads.ForEach(a => a.Start());
             threads.ForEach(a => a.Join());
         }
+
+        private ChannelCredentials GetCredentials()
+        {
+            var path = Directory.GetCurrentDirectory();
+            ChannelCredentials channelCredentials = GoogleCredential.FromComputeCredential().ToChannelCredentials();
+            return channelCredentials;
+        }
+
 
         private int GetRandom(int upperLimit)
         {
