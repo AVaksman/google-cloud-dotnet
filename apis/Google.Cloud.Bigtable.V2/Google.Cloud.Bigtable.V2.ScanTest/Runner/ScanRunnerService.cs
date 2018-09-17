@@ -184,11 +184,11 @@ namespace Google.Cloud.Bigtable.V2.ScanTest.Runner
             new ReadRowsRequest
             {
                 TableNameAsTableName = _table,
-                Rows = RowSet.FromRowRanges(RowRange.ClosedOpen(rowKey, null)),
+                Rows = rowKey != null ? RowSet.FromRowRanges(RowRange.ClosedOpen(rowKey, null)) : null,
                 RowsLimit = _config.RowsLimit,
                 Filter = RowFilters.CellsPerColumnLimit(1)
             };
-
+   
         private async Task<int> CheckReadAsync(ReadRowsStream responseRead)
         {
             int rowCount = 0;
