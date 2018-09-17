@@ -124,7 +124,63 @@ namespace Google.Cloud.Bigtable.V2.ScanTest.Runner
             return rowsRead;
         }
 
-        public ReadRowsRequest ReadRowsRequestBuilder(BigtableByteString rowKey) =>
+        public async Task<int> ScanRowsLimit(LongConcurrentHistogram histogramScan)
+        {
+            BigtableClient.ClientCreationSettings _scanClientCreationSettings = new BigtableClient.ClientCreationSettings(_config.ChannelCount);
+            CreateAppProfile();
+            BigtableClient _bigtableClient = BigtableClient.Create(_scanClientCreationSettings, _config.AppProfileId);
+
+            _stringFormat = "D" + _config.RowKeySize;
+            _table = new TableName(_config.ProjectId, _config.InstanceId, _config.TableName);
+            //Perform scan test
+            var runtime = Stopwatch.StartNew();
+
+            ReadErrors = 0;
+
+            _logger.LogInformation($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Starting Scan test against table {_config.TableName} for {_config.ScanTestDurationMinutes} minutes at {_config.RowsLimit} rows chunks, using {_config.ChannelCount} channel(s).");
+            _logger.LogInformation($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} AppProfile ID {_config.AppProfileId}");
+
+            var rowsRead = 0;
+            var r = new Random();
+
+            while (runtime.Elapsed.TotalMinutes < _config.ScanTestDurationMinutes)
+            {
+                var rowNum = r.Next(0, (int)_config.Records);
+                string rowKey = _config.RowKeyPrefix + rowNum.ToString(_stringFormat);
+
+                var readRowsRequest = ReadRowsRequestBuilder();
+
+                var startReadTime = runtime.Elapsed;
+                try
+                {
+                    //reading rows by chunks = _settings.RowsLimit at a time
+#if DEBUG
+                    _logger.LogInformation($"Scanning beginning with rowkey {rowKey}");
+#endif
+                    var streamingResponse = _bigtableClient.ReadRows(readRowsRequest);
+                    rowsRead += await CheckReadAsync(streamingResponse).ConfigureAwait(false);
+#if DEBUG
+                    var status = streamingResponse.GrpcCall.ResponseHeadersAsync.Status;
+                    _logger.LogInformation($"Status = {status}");
+#endif
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Failed to read beginning rowkey {rowKey}, error message: {ex.Message}");
+                    ReadErrors++;
+                }
+                finally
+                {
+                    var endReadTime = runtime.Elapsed;
+                    var responseTime = endReadTime - startReadTime;
+                    histogramScan.RecordValue((long)(responseTime.TotalMilliseconds * 100));
+                }
+            }
+
+            return rowsRead;
+        }
+
+        public ReadRowsRequest ReadRowsRequestBuilder(BigtableByteString? rowKey = null) =>
             new ReadRowsRequest
             {
                 TableNameAsTableName = _table,

@@ -68,7 +68,8 @@ namespace Google.Cloud.Bigtable.V2.ScanTest
             try
             {
                 var stopwatch = Stopwatch.StartNew();
-                var rowCount = await _scanRunnerService.Scan(_histogramScan).ConfigureAwait(false);
+                var rowCount = await _scanRunnerService.ScanRowsLimit(_histogramScan).ConfigureAwait(false);
+                //var rowCount = await _scanRunnerService.Scan(_histogramScan).ConfigureAwait(false);
                 stopwatch.Stop();
 
                 _logger.LogInformation($"rowCount {rowCount:N0}, duration: {stopwatch.Elapsed.TotalSeconds:N}");

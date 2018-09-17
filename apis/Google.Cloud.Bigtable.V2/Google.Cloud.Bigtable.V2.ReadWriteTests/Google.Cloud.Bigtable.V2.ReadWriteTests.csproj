@@ -25,7 +25,7 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="Grass-Clump-479-cadc7f3cb8da.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

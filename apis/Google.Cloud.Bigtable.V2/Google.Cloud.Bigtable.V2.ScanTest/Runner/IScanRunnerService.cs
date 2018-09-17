@@ -9,11 +9,13 @@ namespace Google.Cloud.Bigtable.V2.ScanTest.Runner
     public interface IScanRunnerService
     {
         long ReadErrors { get; set; }
-        ReadRowsRequest ReadRowsRequestBuilder(BigtableByteString rowKey);
+        ReadRowsRequest ReadRowsRequestBuilder(BigtableByteString? rowKey = null);
+        //ReadRowsRequest ReadRowsRequestBuilder();
         void WriteCsvToConsole(TimeSpan scanDuration, int rowsRead,  LongConcurrentHistogram hScan);
 
         // void WriteCsv(TimeSpan scanDuration, int rowsRead,  LongConcurrentHistogram hScan);
-
-        Task<int> Scan(LongConcurrentHistogram histogramScan);
+        
+        //Task<int> Scan(LongConcurrentHistogram histogramScan);
+        Task<int> ScanRowsLimit(LongConcurrentHistogram histogramScan);
     }
 }
