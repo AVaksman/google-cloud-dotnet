@@ -49,6 +49,8 @@ namespace Google.Cloud.Bigtable.V2
         /// </summary>
         internal ReadRowsRequest BuildUpdatedRequest()
         {
+            Console.WriteLine($"ReadRows exception occcurred\n Original request is\n{OriginalRequest}");
+            Console.WriteLine($"Original request Rows is null {OriginalRequest.Rows == null}");
             // Remove received rowKeys form Rows.
             var rows = FilterRows();
 
@@ -77,6 +79,7 @@ namespace Google.Cloud.Bigtable.V2
                 newReadRowsRequest.RowsLimit = Math.Max(1, rowsRemaining);
             }
 
+            Console.WriteLine($"new request build\n{newReadRowsRequest}");
             return newReadRowsRequest;
         }
 
