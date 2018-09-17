@@ -51,6 +51,8 @@ namespace Google.Cloud.Bigtable.V2
         {
             Console.WriteLine($"ReadRows exception occcurred\n Original request is\n{OriginalRequest}");
             Console.WriteLine($"Original request Rows is null {OriginalRequest.Rows == null}");
+            Console.WriteLine($"Rows read so far {_rowsReadSoFar}\nLast found key: {LastFoundKey}");
+
             // Remove received rowKeys form Rows.
             var rows = FilterRows();
 
@@ -97,35 +99,78 @@ namespace Google.Cloud.Bigtable.V2
                 return originalRows;
             }
 
-            RowSet newRowSet = new RowSet
-            {
-                RowKeys = { originalRows.RowKeys.Where(key => !StartKeyIsAlreadyRead(key)) }
-            };
+            RowSet newRowSet;
 
-            foreach (RowRange rowRange in originalRows.RowRanges)
+            if (originalRows != null)
             {
-                RowRange.EndKeyOneofCase endKeyOneofCase = rowRange.EndKeyCase;
-                if (endKeyOneofCase == RowRange.EndKeyOneofCase.EndKeyClosed &&
-                    EndKeyIsAlreadyRead(rowRange.EndKeyClosed)
-                    || endKeyOneofCase == RowRange.EndKeyOneofCase.EndKeyOpen &&
-                    EndKeyIsAlreadyRead(rowRange.EndKeyOpen))
+                newRowSet = new RowSet
                 {
-                    continue;
-                }
+                    RowKeys = {originalRows.RowKeys.Where(key => !StartKeyIsAlreadyRead(key))}
+                };
 
-                RowRange.StartKeyOneofCase startKeyOneofCase = rowRange.StartKeyCase;
-                RowRange newRange = rowRange;
-                if (startKeyOneofCase == RowRange.StartKeyOneofCase.StartKeyClosed &&
-                    StartKeyIsAlreadyRead(rowRange.StartKeyClosed)
-                    || (startKeyOneofCase == RowRange.StartKeyOneofCase.StartKeyOpen &&
-                        StartKeyIsAlreadyRead(rowRange.StartKeyOpen))
-                    || startKeyOneofCase == RowRange.StartKeyOneofCase.None)
+                foreach (RowRange rowRange in originalRows.RowRanges)
                 {
-                    newRange = newRange.Clone();
-                    newRange.StartKeyOpen = LastFoundKey.Value;
+                    RowRange.EndKeyOneofCase endKeyOneofCase = rowRange.EndKeyCase;
+                    if (endKeyOneofCase == RowRange.EndKeyOneofCase.EndKeyClosed &&
+                        EndKeyIsAlreadyRead(rowRange.EndKeyClosed)
+                        || endKeyOneofCase == RowRange.EndKeyOneofCase.EndKeyOpen &&
+                        EndKeyIsAlreadyRead(rowRange.EndKeyOpen))
+                    {
+                        continue;
+                    }
+
+                    RowRange.StartKeyOneofCase startKeyOneofCase = rowRange.StartKeyCase;
+                    RowRange newRange = rowRange;
+                    if (startKeyOneofCase == RowRange.StartKeyOneofCase.StartKeyClosed &&
+                        StartKeyIsAlreadyRead(rowRange.StartKeyClosed)
+                        || (startKeyOneofCase == RowRange.StartKeyOneofCase.StartKeyOpen &&
+                            StartKeyIsAlreadyRead(rowRange.StartKeyOpen))
+                        || startKeyOneofCase == RowRange.StartKeyOneofCase.None)
+                    {
+                        newRange = newRange.Clone();
+                        newRange.StartKeyOpen = LastFoundKey.Value;
+                    }
+
+                    newRowSet.RowRanges.Add(newRange);
                 }
-                newRowSet.RowRanges.Add(newRange);
             }
+            else
+            {
+                newRowSet = new RowSet
+                {
+                    RowRanges = { RowRange.Open(LastFoundKey, null)}
+                };
+            }
+
+            //RowSet newRowSet = new RowSet
+            //{
+            //    RowKeys = { originalRows.RowKeys.Where(key => !StartKeyIsAlreadyRead(key)) }
+            //};
+
+            //foreach (RowRange rowRange in originalRows.RowRanges)
+            //{
+            //    RowRange.EndKeyOneofCase endKeyOneofCase = rowRange.EndKeyCase;
+            //    if (endKeyOneofCase == RowRange.EndKeyOneofCase.EndKeyClosed &&
+            //        EndKeyIsAlreadyRead(rowRange.EndKeyClosed)
+            //        || endKeyOneofCase == RowRange.EndKeyOneofCase.EndKeyOpen &&
+            //        EndKeyIsAlreadyRead(rowRange.EndKeyOpen))
+            //    {
+            //        continue;
+            //    }
+
+            //    RowRange.StartKeyOneofCase startKeyOneofCase = rowRange.StartKeyCase;
+            //    RowRange newRange = rowRange;
+            //    if (startKeyOneofCase == RowRange.StartKeyOneofCase.StartKeyClosed &&
+            //        StartKeyIsAlreadyRead(rowRange.StartKeyClosed)
+            //        || (startKeyOneofCase == RowRange.StartKeyOneofCase.StartKeyOpen &&
+            //            StartKeyIsAlreadyRead(rowRange.StartKeyOpen))
+            //        || startKeyOneofCase == RowRange.StartKeyOneofCase.None)
+            //    {
+            //        newRange = newRange.Clone();
+            //        newRange.StartKeyOpen = LastFoundKey.Value;
+            //    }
+            //    newRowSet.RowRanges.Add(newRange);
+            //}
 
             return newRowSet;
         }
