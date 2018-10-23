@@ -77,6 +77,7 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
 
                     var clientSettings = new BigtableServiceApiSettings
                     {
+                        AppProfileId = settings.AppProfileId,
                         MaxChannels = (uint) channelsNeeded,
                         PreferredMaxStreamsPerChannel = 4,
                         MutateRowsSettings = CallSettings.FromCallTiming(CallTiming.FromTimeout(TimeSpan.FromMilliseconds(settings.Timeout)))

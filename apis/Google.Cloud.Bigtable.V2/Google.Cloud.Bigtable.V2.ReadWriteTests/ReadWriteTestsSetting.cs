@@ -5,6 +5,7 @@
         public string InstanceId { get; set; }
         public string ProjectId { get; set; }
         public string TableName { get; set; }
+        public string AppProfileId { get; set; }
         public string TablePrefix { get; set; }
         public string ColumnFamily { get; set; }
         public string RowKeyPrefix { get; set; }
