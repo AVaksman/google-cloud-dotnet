@@ -12,6 +12,7 @@ using Google.Cloud.Bigtable.Common.V2;
 using Google.Cloud.Bigtable.V2;
 using Grpc.Auth;
 using Grpc.Core;
+using Grpc.Gcp;
 using HdrHistogram;
 
 namespace Google.Cloud.Bigtable.V2.ReadWriteTests
@@ -49,8 +50,9 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
                 }
                 case int n when n <= 10:
                 {
-                    var _mockClientCreationSettings = new BigtableClient.ClientCreationSettings(1, null, ChannelCredentials.Insecure, new ServiceEndpoint("localhost", 50051));
-                    _bigtableClient = BigtableClient.Create(_mockClientCreationSettings);
+                    string endpoint = new ServiceEndpoint("localhost", 50051).ToString();
+                    GcpCallInvoker callInvoker = new GcpCallInvoker(endpoint, ChannelCredentials.Insecure);
+                    _bigtableClient = BigtableClient.Create(callInvoker);
                     _settings.InstanceId = "MockServer";
                     break;
                 }
@@ -72,8 +74,14 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
                     {
                         channelsNeeded = (Math.Max(settings.RpcThreads, settings.LoadThreads) + 3) / 4;
                     }
-                    var channelPoolCreationSettings = new BigtableClient.ClientCreationSettings(channelsNeeded, null,GetCredentials(), null);
-                    _bigtableClient = BigtableClient.Create(channelPoolCreationSettings);
+
+                    var clientSettings = new BigtableServiceApiSettings
+                    {
+                        MaxChannels = (uint) channelsNeeded,
+                        PreferredMaxStreamsPerChannel = 4,
+                        MutateRowsSettings = CallSettings.FromCallTiming(CallTiming.FromTimeout(TimeSpan.FromMilliseconds(settings.Timeout)))
+                    };
+                    _bigtableClient = BigtableClient.Create(settings: clientSettings);
                     break;
                 }
             }
@@ -900,7 +908,7 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
 
                             try
                             {
-                                _bigtableClient.MutateRow(request, CallSettings.FromCallTiming(CallTiming.FromTimeout(TimeSpan.FromMilliseconds(_settings.Timeout))));
+                                _bigtableClient.MutateRow(request);
                             }
                             catch (Exception ex)
                             {

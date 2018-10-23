@@ -24,8 +24,8 @@ namespace Google.Cloud.Bigtable.V2.ScanTest.Runner
 
         static TableName _table;
         static string _stringFormat;
-        static BigtableClient.ClientCreationSettings _scanClientCreationSettings = new BigtableClient.ClientCreationSettings(1);
-        static readonly BigtableClient _bigtableClient = BigtableClient.Create(_scanClientCreationSettings);
+        
+        static readonly BigtableClient _bigtableClient = BigtableClient.Create(settings: new BigtableServiceApiSettings{MaxChannels = 1});
 
         public ScanRunnerService(ILogger<App> logger, IOptions<AppSettings> config)
         {
