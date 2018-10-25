@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
+using Google.Api.Gax.Grpc;
+using Google.Cloud.Bigtable.Admin.V2;
 using Google.Cloud.Bigtable.Common.V2;
 using Google.Cloud.Bigtable.V2;
 using Grpc.Core;
@@ -24,8 +26,6 @@ namespace Google.Cloud.Bigtable.V2.ScanTest.Runner
 
         static TableName _table;
         static string _stringFormat;
-        
-        static readonly BigtableClient _bigtableClient = BigtableClient.Create(settings: new BigtableServiceApiSettings{MaxChannels = 1});
 
         public ScanRunnerService(ILogger<App> logger, IOptions<AppSettings> config)
         {
@@ -71,6 +71,15 @@ namespace Google.Cloud.Bigtable.V2.ScanTest.Runner
 
         public async Task<int> Scan(LongConcurrentHistogram histogramScan)
         {
+            CreateAppProfile();
+            BigtableServiceApiSettings clientSettings = new BigtableServiceApiSettings
+            {
+                AppProfileId = _config.AppProfileId,
+                MaxChannels = (uint)_config.ChannelCount,
+                ReadRowsSettings = CallSettings.FromCallTiming(CallTiming.FromTimeout(TimeSpan.FromMilliseconds(_config.Timeout)))
+            };
+            BigtableClient _bigtableClient = BigtableClient.Create(settings: clientSettings);
+
             _stringFormat = "D" + _config.RowKeySize;
             _table = new TableName(_config.ProjectId, _config.InstanceId, _config.TableName);
             //Perform scan test
@@ -120,11 +129,74 @@ namespace Google.Cloud.Bigtable.V2.ScanTest.Runner
             return rowsRead;
         }
 
-        public ReadRowsRequest ReadRowsRequestBuilder(BigtableByteString rowKey) =>
+        public async Task<int> ScanRowsLimit(LongConcurrentHistogram histogramScan)
+        {
+            CreateAppProfile();
+            BigtableServiceApiSettings clientSettings = new BigtableServiceApiSettings
+            {
+                AppProfileId = _config.AppProfileId,
+                MaxChannels = (uint)_config.ChannelCount,
+                ReadRowsSettings = CallSettings.FromCallTiming(CallTiming.FromTimeout(TimeSpan.FromMilliseconds(_config.Timeout)))
+            };
+            BigtableClient _bigtableClient = BigtableClient.Create(settings:clientSettings);
+
+            _stringFormat = "D" + _config.RowKeySize;
+            _table = new TableName(_config.ProjectId, _config.InstanceId, _config.TableName);
+            //Perform scan test
+            var runtime = Stopwatch.StartNew();
+
+            ReadErrors = 0;
+
+            _logger.LogInformation($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Starting Scan test against table {_config.TableName} for {_config.ScanTestDurationMinutes} minutes at {_config.RowsLimit} rows chunks, using {_config.ChannelCount} channel(s).");
+            _logger.LogInformation($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} AppProfile ID {_config.AppProfileId}");
+            _logger.LogInformation($"ReadRows timeout is {_config.Timeout}");
+
+            var rowsRead = 0;
+            var r = new Random();
+
+            while (runtime.Elapsed.TotalMinutes < _config.ScanTestDurationMinutes)
+            {
+                var rowNum = r.Next(0, (int)_config.Records);
+                string rowKey = _config.RowKeyPrefix + rowNum.ToString(_stringFormat);
+
+                var readRowsRequest = ReadRowsRequestBuilder();
+                _logger.LogInformation($"readRowsRequest is:\n{readRowsRequest}");
+
+                var startReadTime = runtime.Elapsed;
+                try
+                {
+                    //reading rows by chunks = _settings.RowsLimit at a time
+#if DEBUG
+                    _logger.LogInformation($"Scanning beginning with rowkey {rowKey}");
+#endif
+                    var streamingResponse = _bigtableClient.ReadRows(readRowsRequest, callSettings: CallSettings.FromCallTiming(CallTiming.FromTimeout(TimeSpan.FromMilliseconds(_config.Timeout))));
+                    rowsRead += await CheckReadAsync(streamingResponse).ConfigureAwait(false);
+#if DEBUG
+                    var status = streamingResponse.GrpcCall.ResponseHeadersAsync.Status;
+                    _logger.LogInformation($"Status = {status}");
+#endif
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} Failed to read beginning rowkey {rowKey}, error message: {ex.Message}");
+                    ReadErrors++;
+                }
+                finally
+                {
+                    var endReadTime = runtime.Elapsed;
+                    var responseTime = endReadTime - startReadTime;
+                    histogramScan.RecordValue((long)(responseTime.TotalMilliseconds * 100));
+                }
+            }
+
+            return rowsRead;
+        }
+
+        public ReadRowsRequest ReadRowsRequestBuilder(BigtableByteString? rowKey = null) =>
             new ReadRowsRequest
             {
                 TableNameAsTableName = _table,
-                Rows = RowSet.FromRowRanges(RowRange.ClosedOpen(rowKey, null)),
+                Rows = rowKey != null ? RowSet.FromRowRanges(RowRange.ClosedOpen(rowKey, null)) : null,
                 RowsLimit = _config.RowsLimit,
                 Filter = RowFilters.CellsPerColumnLimit(1)
             };
@@ -140,6 +212,42 @@ namespace Google.Cloud.Bigtable.V2.ScanTest.Runner
 #endif
             }).ConfigureAwait(false);
             return rowCount;
+        }
+
+        internal void CreateAppProfile()
+        {
+            BigtableInstanceAdminClient bigtableInstanceAdminClient = BigtableInstanceAdminClient.Create();
+
+            GetAppProfileRequest getAppProfileRequest = new GetAppProfileRequest
+            {
+                AppProfileName = new AppProfileName(_config.ProjectId, _config.InstanceId, _config.AppProfileId)
+            };
+            try
+            {
+                bigtableInstanceAdminClient.GetAppProfile(getAppProfileRequest);
+            }
+            catch (RpcException ex)
+            {
+                if (ex.StatusCode == StatusCode.NotFound)
+                {
+                    AppProfile cSharpAppProfile = new AppProfile
+                    {
+                        Description = "C# performance testing",
+                        MultiClusterRoutingUseAny = new AppProfile.Types.MultiClusterRoutingUseAny()
+                    };
+                    CreateAppProfileRequest createAppProfileRequest = new CreateAppProfileRequest
+                    {
+                        ParentAsInstanceName = new InstanceName(_config.ProjectId, _config.InstanceId),
+                        AppProfileId = _config.AppProfileId,
+                        AppProfile = cSharpAppProfile,
+                    };
+                    bigtableInstanceAdminClient.CreateAppProfile(createAppProfileRequest);
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
     }
 }

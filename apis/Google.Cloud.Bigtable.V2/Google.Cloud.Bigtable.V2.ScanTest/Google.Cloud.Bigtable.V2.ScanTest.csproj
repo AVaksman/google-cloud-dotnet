@@ -38,6 +38,7 @@
 
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Google.Cloud.Bigtable.Admin.V2\Google.Cloud.Bigtable.Admin.V2\Google.Cloud.Bigtable.Admin.V2.csproj" />
     <ProjectReference Include="..\Google.Cloud.Bigtable.V2\Google.Cloud.Bigtable.V2.csproj" />
   </ItemGroup>
 </Project>

@@ -35,6 +35,8 @@ namespace Google.Cloud.Bigtable.V2.ScanTest
             {
                 "Options:",
                 { "i|instance=", "Bigtable InstanceID name", v => _config.InstanceId = v },
+                { "o|timeout=", "MutateRows call timeout setting, default 20000 milliseconds", v => _config.Timeout = Convert.ToInt32(v)},
+                { "a|AppProfileId=", "AppProfileId to be used", v => _config.AppProfileId = v },
                 { "r|rows=", "RowKey spectrum/total rows loaded", v => _config.Records = Convert.ToInt64(v)},
                 { "m|minutes=", "Scan test duration minutes", v => _config.ScanTestDurationMinutes = Convert.ToInt32(v)},
                 { "b|batch=", "ReadRows batch size rows", v => _config.RowsLimit = Convert.ToInt64(v)},
@@ -66,13 +68,14 @@ namespace Google.Cloud.Bigtable.V2.ScanTest
             try
             {
                 var stopwatch = Stopwatch.StartNew();
-                var rowCount = await _scanRunnerService.Scan(_histogramScan).ConfigureAwait(false);
+                var rowCount = await _scanRunnerService.ScanRowsLimit(_histogramScan).ConfigureAwait(false);
+                //var rowCount = await _scanRunnerService.Scan(_histogramScan).ConfigureAwait(false);
                 stopwatch.Stop();
 
                 _logger.LogInformation($"rowCount {rowCount:N0}, duration: {stopwatch.Elapsed.TotalSeconds:N}");
 
                 _scanRunnerService.WriteCsvToConsole(stopwatch.Elapsed, rowCount, _histogramScan);
-                _scanRunnerService.WriteCsv(stopwatch.Elapsed, rowCount, _histogramScan);
+                //_scanRunnerService.WriteCsv(stopwatch.Elapsed, rowCount, _histogramScan);
             }
 
             catch (Exception ex)

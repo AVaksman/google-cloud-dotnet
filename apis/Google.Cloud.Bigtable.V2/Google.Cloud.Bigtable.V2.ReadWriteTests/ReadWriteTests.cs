@@ -80,7 +80,6 @@ namespace Google.Cloud.Bigtable.V2.ReadWriteTests
                         AppProfileId = settings.AppProfileId,
                         MaxChannels = (uint) channelsNeeded,
                         PreferredMaxStreamsPerChannel = 4,
-                        MutateRowsSettings = CallSettings.FromCallTiming(CallTiming.FromTimeout(TimeSpan.FromMilliseconds(settings.Timeout)))
                     };
                     _bigtableClient = BigtableClient.Create(settings: clientSettings);
                     break;
