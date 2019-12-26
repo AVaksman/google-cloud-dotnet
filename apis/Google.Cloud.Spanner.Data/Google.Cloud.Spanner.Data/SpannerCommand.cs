@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Google.Api.Gax;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
+using Google.Api.Gax;
+using Google.Protobuf.Collections;
 
 namespace Google.Cloud.Spanner.Data
 {
@@ -418,6 +419,11 @@ namespace Google.Cloud.Spanner.Data
         /// <returns>A task whose result is a lower bound for the number of rows affected.</returns>
         public Task<long> ExecutePartitionedUpdateAsync(CancellationToken cancellationToken = default) =>
             CreateExecutableCommand().ExecutePartitionedUpdateAsync(cancellationToken);
+
+        /// <summary>
+        /// Provide Spanner instance endpoints.
+        /// </summary>
+        public Task<RepeatedField<string>> ExecuteGetInstanceEndpointsAsync() => CreateExecutableCommand().GetInstanceEndpointsAsync();
 
         /// <summary>
         /// Creates an executable command that captures all the necessary information from this command.

@@ -18,11 +18,15 @@ using Google.Cloud.Spanner.Common.V1;
 using Google.Cloud.Spanner.V1;
 using Google.Cloud.Spanner.V1.Internal.Logging;
 using Google.Protobuf;
+using Google.Protobuf.Collections;
 using Grpc.Core;
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -109,6 +113,11 @@ namespace Google.Cloud.Spanner.Data
         internal bool IsClosed => (State & ConnectionState.Open) == 0;
 
         internal bool IsOpen => (State & ConnectionState.Open) == ConnectionState.Open;
+
+        /// <summary>
+        /// Dictionary for storing the list of endpoints by the instanceId key
+        /// </summary>
+        public static ConcurrentDictionary<string, IEnumerable<string>> Endpoints { get; set; } = new ConcurrentDictionary<string, IEnumerable<string>>();
 
         /// <summary>
         /// Creates a SpannerConnection with no datasource or credential specified.
@@ -639,6 +648,9 @@ namespace Google.Cloud.Spanner.Data
                     OnStateChange(new StateChangeEventArgs(previousState, ConnectionState.Connecting));
                     try
                     {
+
+                        await GetInstanceEndpointsAsync().ConfigureAwait(false);
+                        OverrideSpannerClientEndpoints();
                         _sessionPool = await Builder.AcquireSessionPoolAsync().ConfigureAwait(false);
                     }
                     finally
@@ -874,5 +886,49 @@ namespace Google.Cloud.Spanner.Data
 
         /// <inheritdoc />
         protected override DbProviderFactory DbProviderFactory => SpannerProviderFactory.Instance;
+
+        /// <summary>
+        /// Keep an accessible list of endpoints for the current instance.
+        /// </summary>
+        private async Task GetInstanceEndpointsAsync()
+        {
+            // Check for the presence of an environment variable
+            // if present, redefine the endpoint.
+            string resourceBaseRouteValue =
+                Environment.GetEnvironmentVariable("GOOGLE_CLOUD_ENABLE_RESOURCE_BASED_ROUTING")?.ToLower();
+            bool isRouteEnable = !string.IsNullOrEmpty(resourceBaseRouteValue) &&
+                resourceBaseRouteValue.Equals("true");
+
+            if (isRouteEnable)
+            {
+                SpannerCommand spannerCommand = new SpannerCommand(this);
+                RepeatedField<string> endpoints = await spannerCommand.ExecuteGetInstanceEndpointsAsync().ConfigureAwait(false);
+
+                if (endpoints?.Count > 0)
+                {
+                    // Save the endpoint information with instanceName key.
+                    Endpoints.GetOrAdd(Builder.SpannerInstance, key => endpoints.ToList());
+                }
+            }
+        }
+
+        /// <summary>
+        /// Override the available endpoint list for the current instance.
+        /// </summary>
+        private void OverrideSpannerClientEndpoints(string endpointUri)
+        {
+            if (Endpoints.Count > 0)
+            {
+                // Get the first endpoint url for current instanceId.
+                string endPointUri = Endpoints[Builder.SpannerInstance].FirstOrDefault();
+                // Verify the endpoint and override it.
+                if (!string.IsNullOrEmpty(endPointUri))
+                {
+                    Builder.Host = endPointUri;
+                    Builder.EndPoint.WithHost(endPointUri);
+                    Builder.EndPoint.WithPort(Builder.Port);
+                }
+            }
+        }
     }
 }

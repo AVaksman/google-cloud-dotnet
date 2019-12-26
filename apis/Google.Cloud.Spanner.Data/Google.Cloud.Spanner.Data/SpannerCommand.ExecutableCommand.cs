@@ -13,9 +13,12 @@
 // limitations under the License.
 
 using Google.Api.Gax;
+using Google.Api.Gax.Grpc;
 using Google.Cloud.Spanner.Admin.Database.V1;
+using Google.Cloud.Spanner.Admin.Instance.V1;
 using Google.Cloud.Spanner.Common.V1;
 using Google.Cloud.Spanner.V1;
+using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using System;
@@ -176,6 +179,44 @@ namespace Google.Cloud.Spanner.Data
                 var transaction = new EphemeralTransaction(Connection, s_partitionedDmlTransactionOptions);
                 // Note: no commit here. PDML transactions are implicitly committed as they go along.
                 return await transaction.ExecuteDmlAsync(request, cancellationToken, CommandTimeout).ConfigureAwait(false);
+            }
+
+            internal async Task<string> GetInstanceEndpointsAsync(int numRetries = 5)
+            {
+                // Get default endpoint.
+                InstanceAdminClient instanceAdminClient =
+                    await InstanceAdminClient.CreateAsync(Connection.Builder.EndPoint).ConfigureAwait(false);
+                // Create request for instance with endpoints.
+                FieldMask fieldMask = new FieldMask { Paths = {"endpoint_uris"} };
+                GetInstanceRequest request = new GetInstanceRequest
+                {
+                    InstanceName = new InstanceName(Connection.Project, Connection.SpannerInstance),
+                    FieldMask = fieldMask
+                };
+                // Initialize the call settings with exponential back-off arguments.
+                CallSettings callSettings = CreateRetryCallSettings(numRetries);
+                try
+                {
+                    // Get list of available endpoints from GetInstanceRequest.
+                    // Retry to call the GetInstance method with endpoints by exponential back off.
+                    Instance instance = instanceAdminClient.GetInstance(request, callSettings);
+                    return instance.EndpointUris.Count == 0 ? null : instance.EndpointUris[0];
+                }
+                catch (RpcException gRpcException)
+                {
+                    if (gRpcException.StatusCode == StatusCode.PermissionDenied)
+                    {
+#pragma warning disable CS1030 // #warning directive
+#warning PermissionDenied exception
+                        // Print warning message with PermissionDenied
+                        // status in Debug mode.
+                        Console.WriteLine(gRpcException.Message);
+#pragma warning restore CS1030 // #warning directive
+                        return null;
+                    }
+                    // Translate rpc errors into a Spanner exception.
+                    throw new SpannerException(gRpcException);
+                }
             }
 
             private void ValidateConnectionAndCommandTextBuilder()
@@ -354,6 +395,15 @@ namespace Google.Cloud.Spanner.Data
                     throw new NotSupportedException(
                         $"{nameof(CommandBehavior.SchemaOnly)} is not supported by Cloud Spanner.");
                 }
+            }
+
+            private CallSettings CreateRetryCallSettings(int tryCount)
+            {
+                var retryBackoff = new BackoffSettings(TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(5000), 2);
+                var timeoutBackoff = new BackoffSettings(TimeSpan.FromMilliseconds(60000), TimeSpan.FromMilliseconds(300000), 1.2);
+                return CallSettings.FromCallTiming(CallTiming.FromRetry(new RetrySettings(retryBackoff, timeoutBackoff, Expiration.None,
+                    (RpcException e) => e.Status.StatusCode != StatusCode.PermissionDenied && --tryCount > 0,
+                    RetrySettings.RandomJitter)));
             }
         }
     }
